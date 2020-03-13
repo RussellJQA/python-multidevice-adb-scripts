@@ -1,20 +1,41 @@
-from operator import itemgetter
+import collections
+import json
+import os.path
 import re
-from subprocess import Popen, PIPE
+import subprocess
 
 """
 For when multiple Android devices are attached/connected via USB:
-    Get a dictionary of the devices attached/connected, indexed by their transport IDs.
-    Those transport IDs can then be specified as options to ADB commands.
+    Get dictionary of the devices attached/connected, with a named tuple of their:
+        serial number
+        transport ID
+    The serial numbers or transport IDs can then be specified as options to ADB
+    commands.
+    Although the transport IDs are simpler to specify, they can change.
 """
 
+# TODO: Write a function to screencap a PNG:
+"""
+    If there's exactly 1 attached device:
+        screencap a PNG
+    Else If there are attached devices:
+        Ask which device to use
+        Then screencap a PNG
+    Else:
+        Print error message
+"""
 
-def get_attached_devices(devices):
+Device = collections.namedtuple("Device", "serial_no id")
+
+
+def get_attached_devices(devices, adb_path=None):
 
     adb_fn = "AdbListDevicesLong.bat"
     with open(adb_fn, "w") as adb_file:
-        adb_exe = '"C:\\Program Files (x86)\\AndroidTools\\adb.exe"'
-        adb_file.write(adb_exe + " devices -l" + "\n\n")
+
+        adb_exe = "adb" if adb_path is None else os.path.join(adb_path, "adb.exe")
+        adb_file.write(f'"{adb_exe}" devices -l\n\n')
+        #   Need to include double quotation marks in what's written to adb_file.
 
     #   "adb devices" lists the serial numbers of devices attached/connected via USB
     #   "adb devices -l" adds the following additional information:
@@ -24,31 +45,43 @@ def get_attached_devices(devices):
     #       transport_id    (e.g. "4")
     #
     #   According to "adb --help", options to ADB commands include:
-    # 	    -t ID			Use device with the given transport id
+    # 	    -t ID			Use device with the given transport ID
     # 	    -s SERIAL		Use device with the given serial number
 
-    p = Popen([adb_fn], stdout=PIPE, stderr=PIPE, universal_newlines=True,)
-
-    list_of_devices, errors = p.communicate()
+    list_of_devices = subprocess.check_output([adb_fn]).decode()
 
     attached_devices = {}
     #   devices attached/connected (via USB), indexed by tranport IDs
 
     for device in devices:
-        pattern = (
-            r"model:" + devices[device] + r" device\:[A-Za-z0-9_]+ transport_id\:(\d)"
-        )
+
+        transport_id = None
+        serial_number = None
+
+        # Search for the device's serial number
+        pattern = r"([A-Za-z0-9]+)[ ]+device product\:.+model:" + devices[device]
         match = re.search(pattern, list_of_devices)
         if match:
-            attached_devices[match.group(1)] = device
+            serial_number = match.group(1)
 
-    if errors:
-        print(f"\nerrors:\n{errors}")
+            # Search for the device's transport ID
+            pattern = (
+                r"model:"
+                + devices[device]
+                + r" device\:[A-Za-z0-9_]+ transport_id\:(\d)"
+            )
+            match = re.search(pattern, list_of_devices)
+            if match:
+                transport_id = match.group(1)
+
+        if transport_id is not None and serial_number is not None:
+            attached_devices[device] = Device(serial_no=serial_number, id=transport_id)
 
     return attached_devices
 
 
 def main():
+    # ADB_PATH = r"C:\ProgramData\chocolatey\lib\adb\tools\platform-tools"
     my_devices = {
         # key: common name for the device
         # value: what "ADB devices" lists as "model"
@@ -56,15 +89,15 @@ def main():
         "Huawei Nexus 6P": "Nexus_6P",
         "Motorola Droid RAZR M": "XT907",
     }
+    # attached_devices = get_attached_devices(my_devices, ADB_PATH)
     attached_devices = get_attached_devices(my_devices)
-    # TODO: If possible, programatically determine whether to include the following:
-    # input("\nPress any key to continue ")
-    #   Use this if not running from within VSCode
 
-    print("\nDevices attached/connected (via USB), indexed by their transport IDs:")
+    print("\nDevices attached (via USB), with their serial numbers and transport IDs:")
     if attached_devices:
-        for (transport_id, attached_device) in sorted(attached_devices.items()):
-            print(f"\t{transport_id}: {attached_device}")
+        for device in attached_devices.items():
+            print(
+                f"\t{device[0]}: (serial_no={device[1].serial_no}, id={device[1].id})"
+            )
     else:
         print("None")
 
