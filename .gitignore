@@ -1,3 +1,4 @@
-
 AdbListDevicesLong.bat
+batch/
 misc/
+__pycache__

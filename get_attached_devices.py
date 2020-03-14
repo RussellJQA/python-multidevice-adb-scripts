@@ -14,17 +14,6 @@ For when multiple Android devices are attached/connected via USB:
     Although the transport IDs are simpler to specify, they can change.
 """
 
-# TODO: Write a function to screencap a PNG:
-"""
-    If there's exactly 1 attached device:
-        screencap a PNG
-    Else If there are attached devices:
-        Ask which device to use
-        Then screencap a PNG
-    Else:
-        Print error message
-"""
-
 Device = collections.namedtuple("Device", "serial_no id")
 
 
@@ -81,7 +70,9 @@ def get_attached_devices(devices, adb_path=None):
 
 
 def main():
-    # ADB_PATH = r"C:\ProgramData\chocolatey\lib\adb\tools\platform-tools"
+
+    # TODO: Put this dictionary in a JSON file which can be referenced by any of these
+    #       scripts.
     my_devices = {
         # key: common name for the device
         # value: what "ADB devices" lists as "model"
@@ -89,17 +80,25 @@ def main():
         "Huawei Nexus 6P": "Nexus_6P",
         "Motorola Droid RAZR M": "XT907",
     }
-    # attached_devices = get_attached_devices(my_devices, ADB_PATH)
-    attached_devices = get_attached_devices(my_devices)
 
-    print("\nDevices attached (via USB), with their serial numbers and transport IDs:")
-    if attached_devices:
+    # NOTE to users: If your folder which contains ADB.exe is not in your path,
+    #   then you need to specify its location simlar to how it's done below:
+    # ADB_PATH = r"C:\ProgramData\chocolatey\lib\adb\tools\platform-tools"
+    # attached_devices = get_attached_devices(my_devices, ADB_PATH)
+
+    attached_devices = get_attached_devices(my_devices)
+    count = len(attached_devices)
+
+    print(f"\n{count} devices attached, with their serial numbers and transport IDs:")
+    if count:
         for device in attached_devices.items():
             print(
                 f"\t{device[0]}: (serial_no={device[1].serial_no}, id={device[1].id})"
             )
     else:
         print("None")
+
+    input("\nPress any key to continue: ")
 
 
 if __name__ == "__main__":
