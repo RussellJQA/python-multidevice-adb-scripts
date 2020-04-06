@@ -1,5 +1,5 @@
 from get_attached_devices import get_attached_devices
-from get_screencap import adb_screencap
+from get_screencaps import adb_screencap
 
 # TODO: Parameterize this so that it can be called from the command line with a device
 #       and it will get a screenshot from that device (if it's attached
@@ -11,8 +11,8 @@ def get_specified_screencap(device):
     if attached_devices:
         attached_device = attached_devices[device]
         serial_no = attached_device.serial_no
-        id = attached_device.id
-        print(f"\nGetting a screenshot for {device}: (serial_no={serial_no}, id={id}).")
+        transport_id = attached_device.transport_id
+        print(f"\nGetting a screenshot for {device}: (serial_no={serial_no}, id={transport_id}).")
         adb_screencap(serial_no=f"{serial_no}")
 
 

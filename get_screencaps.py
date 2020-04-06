@@ -5,7 +5,7 @@ import subprocess
 from get_attached_devices import get_attached_devices
 
 
-def adb_screencap(serial_no=None, id=None, adb_path=None):
+def adb_screencap(serial_no=None, transport_id=None, adb_path=None):
 
     adb_exe = "adb" if adb_path is None else os.path.join(adb_path, "adb.exe")
 
@@ -16,8 +16,8 @@ def adb_screencap(serial_no=None, id=None, adb_path=None):
     param = ""
     if serial_no is not None:
         param = f"-s {serial_no}"
-    elif id is not None:
-        param = f"-t {id}"
+    elif transport_id is not None:
+        param = f"-t {transport_id}"
 
     adb_fn = os.path.join("batch", f"{timestamp}.bat")
     with open(adb_fn, "w") as adb_file:
@@ -40,8 +40,8 @@ def get_screencap(my_devices):
         print(f"\nThere are {num_attached_devices} device(s) attached:")
         for count, device in enumerate(attached_devices.items(), start=1):
             serial_no = device[1].serial_no
-            id = device[1].id
-            print(f"\tDevice #{count}: {device[0]}: (serial_no={serial_no}, id={id})")
+            transport_id = device[1].transport_id
+            print(f"\tDevice #{count}: {device[0]}: (serial_no={serial_no}, transport_id={transport_id})")
         if num_attached_devices == 1:  # Exactly 1 device attached
             print(f"\nGetting a screenshot.")
             adb_screencap_output = adb_screencap()
@@ -53,7 +53,7 @@ def get_screencap(my_devices):
             )
             (device_key, device) = list(attached_devices.items())[int(device_num) - 1]
             print(f"\nGetting a screenshot for device #{device_num}: {device_key}:")
-            print(f"\t(serial_no={device.serial_no}, id={device.id}).")
+            print(f"\t(serial_no={device.serial_no}, transport_id={device.transport_id}).")
             adb_screencap_output = adb_screencap(serial_no=f"{device.serial_no}")
             print(adb_screencap_output)
     else:

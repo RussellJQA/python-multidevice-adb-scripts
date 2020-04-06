@@ -1,9 +1,3 @@
-import collections
-import json
-import os.path
-import re
-import subprocess
-
 """
 For when multiple Android devices are attached/connected via USB:
     Get dictionary of the devices attached/connected, with a named tuple of their:
@@ -14,7 +8,12 @@ For when multiple Android devices are attached/connected via USB:
     Although the transport IDs are simpler to specify, they can change.
 """
 
-Device = collections.namedtuple("Device", "serial_no id")
+import collections
+import os.path
+import re
+import subprocess
+
+Device = collections.namedtuple("Device", "serial_no transport_id")
 
 
 def get_attached_devices(devices, adb_path=None):
@@ -64,7 +63,7 @@ def get_attached_devices(devices, adb_path=None):
                 transport_id = match.group(1)
 
         if transport_id is not None and serial_number is not None:
-            attached_devices[device] = Device(serial_no=serial_number, id=transport_id)
+            attached_devices[device] = Device(serial_no=serial_number, transport_id=transport_id)
 
     return attached_devices
 
@@ -81,19 +80,19 @@ def main():
         "Motorola Droid RAZR M": "XT907",
     }
 
+    attached_devices = get_attached_devices(my_devices)
     # NOTE to users: If your folder which contains ADB.exe is not in your path,
-    #   then you need to specify its location simlar to how it's done below:
+    #   then you need to specify its location similar to the example below:
     # ADB_PATH = r"C:\ProgramData\chocolatey\lib\adb\tools\platform-tools"
     # attached_devices = get_attached_devices(my_devices, ADB_PATH)
 
-    attached_devices = get_attached_devices(my_devices)
     count = len(attached_devices)
 
     print(f"\n{count} devices attached, with their serial numbers and transport IDs:")
     if count:
         for device in attached_devices.items():
             print(
-                f"\t{device[0]}: (serial_no={device[1].serial_no}, id={device[1].id})"
+                f"\t{device[0]}: (serial_no={device[1].serial_no}, transport_id={device[1].transport_id})"
             )
     else:
         print("None")
